@@ -239,16 +239,16 @@ Since this repository is intended to be public, the timetable baseline (`timetab
 2. Store it as a repo secret (small enough to fit the 64KB secret limit as a
    single session file, unlike a full browser profile):
 ```powershell
-   gh secret set AUTH_JSON < auth.json
+gh secret set AUTH_JSON < auth.json
 ```
 3. Create a **private** Gist (gist.github.com, "Create secret gist") with one file named `state.json` containing `[]`. Copy its id from the URL (`https://gist.github.com/<username>/<this-part>`).
 4. Create a GitHub Personal Access Token (classic) with only the `gist` scope: [github.com/settings/tokens](https://github.com/settings/tokens)
 5. Add these as repo secrets:
 ```powershell
-   gh secret set GIST_TOKEN     # paste the PAT from step 4
-   gh secret set GIST_ID        # paste the gist id from step 3
-   gh secret set TELEGRAM_BOT_TOKEN
-   gh secret set TELEGRAM_CHAT_ID
+gh secret set GIST_TOKEN     # paste the PAT from step 4
+gh secret set GIST_ID        # paste the gist id from step 3
+gh secret set TELEGRAM_BOT_TOKEN
+gh secret set TELEGRAM_CHAT_ID
 ```
 6. Commit `.github/workflows/watcher.yml`, `fetch_state.py`, and `push_state.py` (all included in this repo). Each scheduled run:
    - restores `auth.json` from the `AUTH_JSON` secret
