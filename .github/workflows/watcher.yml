@@ -1,0 +1,54 @@
+# Place at: .github/workflows/watcher.yml
+#
+# Runs watcher.py on a schedule. Restores the auth.json session from a
+# secret, restores the previous timetable baseline from a private Gist
+# (so it never has to be committed to this public repo), runs the
+# scrape+diff+notify cycle, then pushes the updated baseline back to
+# the same Gist for the next run.
+
+name: Timetable Watcher
+
+on:
+  schedule:
+    - cron: "5 3-15 * * *"   # 8:35 AM - 8:35 PM IST, hourly (IST = UTC+5:30)
+  workflow_dispatch: {}
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Restore auth session
+        run: echo '${{ secrets.AUTH_JSON }}' > auth.json
+
+      - name: Restore previous timetable state
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+        run: python fetch_state.py
+
+      - name: Run watcher
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python watcher.py
+
+      - name: Save updated timetable state
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+        run: python push_state.py

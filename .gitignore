@@ -1,0 +1,18 @@
+# Secrets and local config
+.env
+
+# Authenticated session (Playwright storage_state) — never commit
+auth.json
+
+# Runtime baseline (comment this out if you want CI to commit it back
+# for state persistence — see README "Running in CI")
+timetable.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Editor
+.vscode/
+.idea/
