@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import requests
 from dotenv import load_dotenv
@@ -260,8 +261,8 @@ def format_telegram_notification(changes):
         for kind in ("added", "removed", "modified")
     )
 
-    timestamp = datetime.now().astimezone().strftime(
-        "%d %b %Y • %I:%M %p %Z"
+    timestamp = datetime.now(ZoneInfo("Asia/Kolkata")).strftime(
+        "%d %b %Y • %I:%M %p IST"
     )
 
     sections = [
