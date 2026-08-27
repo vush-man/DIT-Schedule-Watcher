@@ -26,8 +26,8 @@ def timetable_to_json(rows):
             "day": cells.nth(6).inner_text().strip(),
             "time": cells.nth(7).inner_text().strip(),
             "room": cells.nth(8).inner_text().strip(),
-            "faculty": cells.nth(9).inner_text().strip(),
-            "secondary_faculty": cells.nth(10).inner_text().strip(),
+            "course_instructor": cells.nth(9).inner_text().strip(),
+            "course_coordinator": cells.nth(10).inner_text().strip(),
             "department": cells.nth(11).inner_text().strip()
         }
 

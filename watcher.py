@@ -113,8 +113,8 @@ def compare_timetables(previous, current):
             "subject",
             "time",
             "room",
-            "faculty",
-            "secondary_faculty"
+            "course_instructor",
+            "course_coordinator"
         ]
 
         for field in fields:
@@ -243,14 +243,14 @@ def print_changes(changes):
 
 def _class_summary(entry):
     """Return a readable, complete description of a timetable entry."""
-    faculty = entry.get("faculty") or "Not assigned"
-    secondary = entry.get("secondary_faculty") or "None"
+    instructor = entry.get("course_instructor") or "Not assigned"
+    coordinator = entry.get("course_coordinator") or "None"
     return (
         f"{entry.get('day', 'Unknown day')} | {entry.get('time', 'Unknown time')}\n"
         f"{entry.get('course_code', 'Unknown course')} — {entry.get('subject', 'Unknown subject')}\n"
         f"Type: {entry.get('class_type', 'Unknown')} | Batch: {entry.get('batch', 'Unknown')}\n"
         f"Room: {entry.get('room', 'Not assigned')}\n"
-        f"Faculty: {faculty} | Secondary faculty: {secondary}"
+        f"Course Instructor: {instructor} | Course Coordinator: {coordinator}"
     )
 
 def format_telegram_notification(changes):
@@ -287,7 +287,8 @@ def format_telegram_notification(changes):
                 f"📅 {entry['day']}\n"
                 f"⏰ {entry['time']}\n"
                 f"📍 {entry['room']}\n"
-                f"👨‍🏫 {entry['faculty']}"
+                f"👨‍🏫 {entry['course_instructor']}\n"
+                f"👩‍🏫 {entry['course_coordinator']}"
             )
 
         sections.append(
