@@ -52,7 +52,8 @@ def scrape_timetable():
 
             page.goto(
                 PORTAL_URL,
-                wait_until="domcontentloaded"
+                wait_until="commit",
+                timeout=60000
             )
 
             # Check whether we're already authenticated
