@@ -253,6 +253,13 @@ def _class_summary(entry):
         f"Course Instructor: {instructor} | Course Coordinator: {coordinator}"
     )
 
+
+def _current_timestamp():
+    return datetime.now(ZoneInfo("Asia/Kolkata")).strftime(
+        "%d %b %Y • %I:%M %p IST"
+    )
+
+
 def format_telegram_notification(changes):
     """Create a clean, readable Telegram message for timetable changes."""
 
@@ -261,13 +268,9 @@ def format_telegram_notification(changes):
         for kind in ("added", "removed", "modified")
     )
 
-    timestamp = datetime.now(ZoneInfo("Asia/Kolkata")).strftime(
-        "%d %b %Y • %I:%M %p IST"
-    )
-
     sections = [
         "📚 <b>Timetable Updated</b>",
-        f"🕒 {timestamp}\n"
+        f"🕒 {_current_timestamp()}\n"
         f"Detected <b>{total_changes}</b> change(s)."
     ]
 
@@ -365,6 +368,15 @@ def format_telegram_notification(changes):
     return "\n\n".join(sections)
 
 
+def format_no_changes_notification(class_count):
+    """Message sent when a check completes and nothing has changed."""
+    return (
+        "✅ <b>Timetable Checked</b>\n"
+        f"🕒 {_current_timestamp()}\n\n"
+        f"No changes found — all {class_count} classes match the last check."
+    )
+
+
 def _telegram_message_parts(message, limit=4000):
     """Split long notifications without cutting a line in half."""
     if len(message) <= limit:
@@ -401,8 +413,11 @@ def _validate_telegram_chat_id(chat_id):
         )
 
 
-def send_telegram_notification(changes):
-    """Send change details to the configured Telegram chat."""
+def send_telegram_message(message):
+    """Send a pre-built HTML message to the configured Telegram chat.
+
+    Shared by both the "changes found" and "no changes" notification paths.
+    """
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
@@ -411,13 +426,13 @@ def send_telegram_notification(changes):
         )
     _validate_telegram_chat_id(chat_id)
 
-    message_parts = _telegram_message_parts(format_telegram_notification(changes))
+    message_parts = _telegram_message_parts(message)
     for number, text in enumerate(message_parts, start=1):
         if len(message_parts) > 1:
             text = f"Part {number}/{len(message_parts)}\n{text}"
         response = requests.post(
             TELEGRAM_API_URL.format(token=token),
-            json={"chat_id": chat_id, 
+            json={"chat_id": chat_id,
                   "text": text,
                   "parse_mode": "HTML"},
             timeout=30,
@@ -431,6 +446,16 @@ def send_telegram_notification(changes):
             raise RuntimeError(f"Telegram rejected the notification ({response.status_code}): {description}")
         if not payload.get("ok"):
             raise RuntimeError(f"Telegram rejected the notification: {payload.get('description', payload)}")
+
+
+def send_telegram_notification(changes):
+    """Send change details to the configured Telegram chat."""
+    send_telegram_message(format_telegram_notification(changes))
+
+
+def send_no_changes_notification(class_count):
+    """Send a short confirmation that a check ran and nothing changed."""
+    send_telegram_message(format_no_changes_notification(class_count))
 
 
 def main():
@@ -505,6 +530,7 @@ def main():
     print_changes(changes)
 
     total_changes = sum(len(changes[kind]) for kind in ("added", "removed", "modified"))
+
     if total_changes:
         try:
             send_telegram_notification(changes)
@@ -514,6 +540,16 @@ def main():
             return
 
         print("\n✅ Telegram notification sent.")
+
+    else:
+        try:
+            send_no_changes_notification(len(current))
+        except (requests.RequestException, RuntimeError, ValueError) as error:
+            # Not delivery-critical the way a real change alert is —
+            # don't block the snapshot update over it, just log it.
+            print(f"\n⚠️ No-changes notification failed to send: {error}")
+        else:
+            print("\n✅ 'No changes' notification sent.")
 
     # --------------------------------------------------
     # UPDATE SNAPSHOT
@@ -531,3 +567,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+            
